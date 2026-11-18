@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#151719">
+  <title>BOUKILI'S CARS — Administration</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <div id="loginView" class="login-wrap">
+    <form id="loginForm" class="login-card">
+      <div class="monogram">B</div><p class="eyebrow">BOUKILI'S CARS</p>
+      <h1>Espace administration</h1><p class="muted">Connectez-vous pour gérer votre flotte.</p>
+      <label>Email<input id="email" type="email" required autocomplete="username"></label>
+      <label>Mot de passe<input id="password" type="password" required autocomplete="current-password"></label>
+      <p id="loginError" class="error"></p><button class="btn dark full">Se connecter</button>
+      <small>Accès réservé à l'équipe autorisée</small>
+    </form>
+  </div>
+  <div id="appView" class="app hidden">
+    <aside class="sidebar">
+      <div class="brand"><div class="monogram small">B</div><div><b>BOUKILI'S CARS</b><small>ADMINISTRATION</small></div></div>
+      <p class="nav-caption">GESTION</p>
+      <button class="nav active" data-tab="vehicles">▣ <span>Flotte automobile</span></button>
+      <button class="nav" data-tab="bookings">▦ <span>Réservations</span><i id="newCount"></i></button>
+      <button class="nav" data-tab="customers">♙ <span>Clients</span></button>
+      <div class="side-bottom"><div id="userEmail" class="user-email"></div><button id="logout" class="logout">↪ Déconnexion</button></div>
+    </aside>
+    <main class="main">
+      <header class="topbar"><div><span class="eyebrow">BOUKILI'S CARS / ESPACE DE GESTION</span><h2 id="pageTitle">Flotte automobile</h2></div><div class="top-actions"><span class="online">● Système actif</span><button id="refresh" class="btn light">↻ Actualiser</button></div></header>
+      <div id="notice" class="notice hidden"></div>
+      <section id="vehiclesTab" class="tab-content">
+        <div class="heading"><div><p class="eyebrow">VOTRE PARC AUTOMOBILE</p><h1>Gestion des véhicules</h1><p class="muted">Ajoutez vos voitures, gérez les tarifs et leur visibilité sur le site.</p></div><button id="addVehicle" class="btn dark">＋ Ajouter une voiture</button></div>
+        <div class="stats"><article><span>Total véhicules</span><b id="totalVehicles">0</b></article><article><span>Visibles sur le site</span><b id="visibleVehicles">0</b></article><article><span>Hors service</span><b id="offVehicles">0</b></article></div>
+        <div class="toolbar"><input id="vehicleSearch" placeholder="Rechercher marque, modèle ou matricule…"><select id="vehicleFilter"><option value="all">Tous les véhicules</option><option value="published">Visibles</option><option value="hidden">Masqués</option><option value="available">Disponibles</option><option value="out_of_service">Hors service</option></select></div>
+        <div id="vehicleGrid" class="vehicle-grid"></div>
+      </section>
+      <section id="bookingsTab" class="tab-content hidden">
+        <div class="heading"><div><p class="eyebrow">SUIVI DES RÉSERVATIONS</p><h1>Demandes de réservation</h1><p class="muted">Demandes du site et demandes reçues directement par WhatsApp.</p></div><button id="addBooking" class="btn dark">＋ Ajouter demande WhatsApp</button></div>
+        <div class="stats"><article><span>Nouvelles demandes</span><b id="newBookings">0</b></article><article><span>À traiter</span><b id="pendingBookings">0</b></article><article><span>Confirmées</span><b id="acceptedBookings">0</b></article></div>
+        <div class="table-wrap"><table><thead><tr><th>CLIENT</th><th>VÉHICULE</th><th>PÉRIODE</th><th>LIEU</th><th>SOURCE</th><th>STATUT</th><th>MODIFIER</th></tr></thead><tbody id="bookingRows"></tbody></table></div>
+      </section>
+      <section id="customersTab" class="tab-content hidden">
+        <div class="heading"><div><p class="eyebrow">RELATION CLIENT</p><h1>Fichier clients</h1><p class="muted">Retrouvez les coordonnées et l'historique des réservations.</p></div></div>
+        <input id="customerSearch" class="search" placeholder="Rechercher nom ou téléphone…">
+        <div class="table-wrap"><table><thead><tr><th>NOM COMPLET</th><th>TÉLÉPHONE</th><th>EMAIL</th><th>RÉSERVATIONS</th><th>CLIENT DEPUIS</th></tr></thead><tbody id="customerRows"></tbody></table></div>
+      </section>
+      <footer>© <span id="year"></span> BOUKILI'S CARS <span>Administration sécurisée</span></footer>
+    </main>
+  </div>
+  <dialog id="vehicleDialog"><form id="vehicleForm" method="dialog"><div class="dialog-head"><div><p class="eyebrow">FLOTTE AUTOMOBILE</p><h2 id="vehicleDialogTitle">Ajouter un véhicule</h2></div><button type="button" class="close" data-close>×</button></div><input id="vehicleId" type="hidden">
+    <div class="form-grid">
+      <label>Marque *<input id="brand" required></label><label>Modèle *<input id="model" required></label>
+      <label>Année<input id="year" type="number" min="1950" max="2100"></label><label>Prix par jour (MAD) *<input id="daily_price" type="number" min="0" required></label>
+      <label>Carburant<select id="fuel"><option value="">Choisir</option><option>Diesel</option><option>Essence</option><option>Hybride</option><option>Électrique</option></select></label>
+      <label>Transmission<select id="transmission"><option value="">Choisir</option><option>Manuelle</option><option>Automatique</option></select></label>
+      <label>Places<input id="seats" type="number" min="1" value="5"></label><label>Portes<input id="doors" type="number" min="2" value="4"></label>
+      <label>Couleur<input id="color"></label><label>Matricule (optionnel)<input id="registration_plate"></label>
+      <label>État<select id="availability_status"><option value="available">Disponible</option><option value="out_of_service">Hors service</option></select></label>
+      <label class="check"><input id="is_published" type="checkbox" checked> Afficher sur le site</label>
+      <label class="wide">Description<textarea id="description" rows="3"></textarea></label>
+      <label class="wide">Liens des photos (un lien par ligne)<textarea id="photo_urls" rows="4" placeholder="https://…"></textarea><small>أول صورة هي الصورة الرئيسية. استعمل رابط مباشر للصورة.</small></label>
+    </div><div class="dialog-actions"><button type="button" class="btn light" data-close>Annuler</button><button class="btn dark">Enregistrer</button></div>
+  </form></dialog>
+  <dialog id="bookingDialog"><form id="bookingForm" method="dialog"><div class="dialog-head"><div><p class="eyebrow">AJOUT MANUEL</p><h2>Demande WhatsApp</h2></div><button type="button" class="close" data-close>×</button></div>
+    <div class="form-grid">
+      <label>Nom du client *<input id="client_name" required></label><label>Téléphone *<input id="client_phone" required></label>
+      <label class="wide">Véhicule *<select id="booking_vehicle" required></select></label>
+      <label>Départ *<input id="start_at" type="datetime-local" required></label><label>Retour *<input id="end_at" type="datetime-local" required></label>
+      <label>Ville de récupération<input id="pickup_city"></label><label>Lieu précis<input id="pickup_location"></label>
+      <label class="wide">Note<textarea id="customer_message" rows="2"></textarea></label>
+    </div><div class="dialog-actions"><button type="button" class="btn light" data-close>Annuler</button><button class="btn dark">Créer la demande</button></div>
+  </form></dialog>
+  <script type="module" src="./app.js"></script>
+</body></html>

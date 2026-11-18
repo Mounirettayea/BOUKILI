@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="BOUKILI'S CARS emblem">
+<defs>
+ <linearGradient id="metal" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff"/><stop offset=".28" stop-color="#8f969e"/><stop offset=".52" stop-color="#f7f8fa"/><stop offset=".78" stop-color="#68717b"/><stop offset="1" stop-color="#fff"/></linearGradient>
+ <linearGradient id="red" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#ff5555"/><stop offset="1" stop-color="#b90012"/></linearGradient>
+ <filter id="glow"><feGaussianBlur stdDeviation="7" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+</defs>
+<path d="M256 18 455 83v177c0 112-75 190-199 234C132 450 57 372 57 260V83z" fill="#090b0e" stroke="#bdc4cc" stroke-width="17"/>
+<path d="M256 39 434 97v160c0 98-65 165-178 207C143 422 78 355 78 257V97z" fill="none" stroke="#e21b2d" stroke-width="8"/>
+<g fill="#ed1b2e"><path d="m256 67 8 17 19 2-14 13 4 19-17-10-17 10 4-19-14-13 19-2z"/><path d="m164 88 6 13 15 2-11 10 3 15-13-8-13 8 3-15-11-10 15-2z"/><path d="m348 88 6 13 15 2-11 10 3 15-13-8-13 8 3-15-11-10 15-2z"/></g>
+<path d="M90 242 123 202l78-14 47-30c21-13 49-17 75-12l52 12 42 37 27 12 10 35-22 16H95z" fill="url(#metal)" stroke="#f8f8f8" stroke-width="7" stroke-linejoin="round"/>
+<path d="m218 187 42-26c18-11 42-14 64-9l47 12 30 28-183-5z" fill="#10151b" stroke="#aeb7c1" stroke-width="5"/>
+<path d="m96 235 50-7 39 2 45 9 75-3 52-10 54 5 45 17" fill="none" stroke="#e51d2f" stroke-width="8" stroke-linecap="round"/>
+<circle cx="164" cy="253" r="28" fill="#090b0e" stroke="url(#metal)" stroke-width="9"/><circle cx="164" cy="253" r="10" fill="#8c969f"/>
+<circle cx="391" cy="253" r="28" fill="#090b0e" stroke="url(#metal)" stroke-width="9"/><circle cx="391" cy="253" r="10" fill="#8c969f"/>
+<path d="M103 303h306" stroke="#aeb6bf" stroke-width="5"/><path d="M124 322h264" stroke="url(#red)" stroke-width="9" stroke-linecap="round"/>
+<path d="M256 478c-96-35-150-92-167-169" fill="none" stroke="url(#metal)" stroke-width="9"/><path d="M256 478c96-35 150-92 167-169" fill="none" stroke="url(#metal)" stroke-width="9"/>
+</svg>

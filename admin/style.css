@@ -15,3 +15,6 @@
 .photo-preview-actions button{border:0;background:#f6eaea;color:#a44;padding:3px 8px;border-radius:3px}
 
 .home-link{display:flex;align-items:center;gap:9px;margin:0 0 8px;padding:11px 8px;border:1px solid #41484c;border-radius:4px;color:#e4d5b4;text-decoration:none;font-size:11px;transition:background .2s,border-color .2s}.home-link:hover{background:#2a3033;border-color:#9e8b64}.home-link span{flex:1}
+
+.top-home{display:none;align-items:center;justify-content:center;gap:6px;padding:9px 11px;border:1px solid #ded8ca;border-radius:4px;color:#6f6042;text-decoration:none;font-size:11px;font-weight:700;white-space:nowrap}.top-home:hover{background:#f7f5f0}
+@media(max-width:720px){.topbar{gap:10px}.top-home{display:inline-flex;flex:0 0 auto}.topbar>div:first-of-type{min-width:0;flex:1}.topbar .eyebrow{font-size:7px;letter-spacing:1px}.topbar h2{font-size:14px}.top-actions{gap:6px}.top-actions .btn{padding:9px 8px;font-size:10px}}

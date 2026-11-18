@@ -277,20 +277,32 @@ footer h4{font-size:10px;letter-spacing:2px;margin-bottom:18px}
 </div>
 
 <script>
-const cars=[
-{name:"Hyundai i10",cat:"city",price:220,gear:"Manuelle",fuel:"Essence",seats:5,img:"https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=900&q=85"},
-{name:"Kia Picanto",cat:"city",price:230,gear:"Manuelle",fuel:"Essence",seats:5,img:"https://images.unsplash.com/photo-1552519507-da3b142c6e3d?auto=format&fit=crop&w=900&q=85"},
-{name:"Dacia Sandero",cat:"city",price:250,gear:"Manuelle",fuel:"Essence",seats:5,img:"https://images.unsplash.com/photo-1494976388531-d1058494cdd8?auto=format&fit=crop&w=900&q=85"},
-{name:"Dacia Logan",cat:"comfort",price:260,gear:"Manuelle",fuel:"Diesel",seats:5,img:"https://images.unsplash.com/photo-1503736334956-4c8f8e92946d?auto=format&fit=crop&w=900&q=85"},
-{name:"Renault Clio 5",cat:"comfort",price:290,gear:"Manuelle",fuel:"Diesel",seats:5,img:"https://images.unsplash.com/photo-1542362567-b07e54358753?auto=format&fit=crop&w=900&q=85"},
-{name:"Peugeot 208",cat:"comfort",price:300,gear:"Automatique",fuel:"Essence",seats:5,img:"https://images.unsplash.com/photo-1489824904134-891ab64532f1?auto=format&fit=crop&w=900&q=85"},
-{name:"Hyundai Accent",cat:"comfort",price:330,gear:"Automatique",fuel:"Diesel",seats:5,img:"https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=900&q=85"},
-{name:"Dacia Jogger",cat:"suv",price:430,gear:"Manuelle",fuel:"Diesel",seats:7,img:"https://images.unsplash.com/photo-1519641471654-76ce0107ad1b?auto=format&fit=crop&w=900&q=85"},
-{name:"Dacia Duster",cat:"suv",price:420,gear:"Manuelle",fuel:"Diesel",seats:5,img:"https://images.unsplash.com/photo-1511919884226-fd3cad34687c?auto=format&fit=crop&w=900&q=85"},
-{name:"Hyundai Tucson",cat:"suv",price:520,gear:"Automatique",fuel:"Diesel",seats:5,img:"https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=900&q=85"},
-{name:"Volkswagen T-Roc",cat:"suv",price:580,gear:"Automatique",fuel:"Diesel",seats:5,img:"https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=900&q=85"},
-{name:"Mercedes C220",cat:"luxury",price:1100,gear:"Automatique",fuel:"Diesel",seats:5,img:"https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?auto=format&fit=crop&w=900&q=85"}
-];
+let cars=[];
+const SUPABASE_URL='https://mbjgirwuqzcjrllnokzj.supabase.co';
+const SUPABASE_KEY='sb_publishable_gEivTgSBsntxUkkJc3h9AA_-cmDpszh';
+const apiHeaders={apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY};
+function carCategory(v){
+ const n=(v.brand+' '+v.model+' '+(v.description||'')).toLowerCase();
+ if(/duster|jogger|tucson|suv|tiguan|sportage|qashqai|rav4|x-trail|captur|t-roc/.test(n))return 'suv';
+ if(/mercedes|bmw|audi|lexus|range rover|porsche|volvo|jaguar/.test(n))return 'luxury';
+ if(/i10|picanto|sandero|alto|swift|panda|aygo|spark|c1|208/.test(n))return 'city';
+ return 'comfort';
+}
+async function loadCarsFromDatabase(){
+ const host=SUPABASE_URL+'/rest/v1/';
+ const [vr,pr]=await Promise.all([
+  fetch(host+'boukili_vehicles?select=id,brand,model,year,daily_price,fuel,transmission,seats,doors,color,description,availability_status,is_published&is_published=eq.true&availability_status=eq.available&order=created_at.desc',{headers:apiHeaders,cache:'no-store'}),
+  fetch(host+'boukili_vehicle_photos?select=vehicle_id,photo_url,is_main,sort_order&order=sort_order.asc',{headers:apiHeaders,cache:'no-store'})
+ ]);
+ if(!vr.ok)throw new Error('تعذر تحميل السيارات من قاعدة البيانات ('+vr.status+').');
+ if(!pr.ok)throw new Error('تعذر تحميل صور السيارات ('+pr.status+').');
+ const vehicles=await vr.json(),photos=await pr.json();
+ cars=vehicles.map(v=>{
+  const p=photos.filter(x=>x.vehicle_id===v.id).sort((a,b)=>(Number(b.is_main)-Number(a.is_main))||a.sort_order-b.sort_order)[0];
+  return {id:v.id,name:[v.brand,v.model].filter(Boolean).join(' '),cat:carCategory(v),price:Number(v.daily_price||0),gear:v.transmission||'—',fuel:v.fuel||'—',seats:v.seats||'—',year:v.year,img:p?.photo_url||'',color:v.color||''};
+ });
+ renderCars();
+}
 const translations={
 fr:{home:"Accueil",fleet:"Nos véhicules",about:"À propos",services:"Services",contact:"Contact",heroKicker:"L'EXCELLENCE DU VOYAGE",heroTitle:'Drive beyond <span>expectations.</span>',heroText:"Découvrez une nouvelle expérience de location automobile. Confort, élégance et liberté, à chaque trajet.",discover:"DÉCOUVRIR NOTRE FLOTTE",pickup:"Ville de prise en charge",start:"Date de départ",end:"Date de retour",search:"RECHERCHER",fleetKicker:"NOTRE SÉLECTION",fleetTitle:"The Fleet",fleetText:"Une sélection de véhicules pour chaque destination et chaque occasion.",all:"TOUS",city:"CITADINES",comfort:"CONFORT",suv:"SUV",luxury:"PREMIUM",aboutKicker:"L'ART DE SE DÉPLACER",aboutTitle:"More than a car.<br>A statement.",aboutText:"BOUKILI'S CARS vous accompagne avec une expérience de location pensée autour de vos besoins. Notre priorité : vous offrir un service simple, fiable et élégant, pour voyager en toute sérénité au Maroc.",contactUs:"CONTACTEZ-NOUS",f1:"Service personnalisé",f2:"Réservation simple",f3:"Mobilité au Maroc",servicesKicker:"NOTRE ENGAGEMENT",servicesTitle:"A refined experience",servicesText:"Chaque détail compte pour rendre votre trajet plus agréable.",s1title:"Réservation facile",s1text:"Contactez-nous directement sur WhatsApp pour organiser votre location.",s2title:"Large choix",s2text:"Des citadines économiques aux SUV et véhicules premium.",s3title:"Livraison sur demande",s3text:"Possibilité d'organiser la livraison dans différentes villes du Maroc.",ctaKicker:"YOUR JOURNEY STARTS HERE",ctaTitle:"Ready for the road?",ctaText:"Votre prochaine destination commence avec BOUKILI'S CARS.",ctaButton:"RÉSERVER MAINTENANT",footerText:"Votre partenaire de mobilité au Maroc. Confort, liberté et élégance sur la route.",quick:"NAVIGATION",reach:"CONTACT",modalTitle:"Réserver votre véhicule",modalText:"Remplissez les informations et envoyez votre demande sur WhatsApp.",send:"ENVOYER SUR WHATSAPP",day:"jour",book:"RÉSERVER"},
 ar:{home:"الرئيسية",fleet:"سياراتنا",about:"من نحن",services:"خدماتنا",contact:"اتصل بنا",heroKicker:"تجربة قيادة استثنائية",heroTitle:'قد أكثر من <span>توقعاتك.</span>',heroText:"اكتشف تجربة جديدة لكراء السيارات، تجمع بين الراحة والأناقة وحرية التنقل.",discover:"اكتشف أسطول السيارات",pickup:"مدينة الاستلام",start:"تاريخ الانطلاق",end:"تاريخ الإرجاع",search:"ابحث عن سيارة",fleetKicker:"اختياراتنا",fleetTitle:"أسطول السيارات",fleetText:"مجموعة متنوعة من السيارات لكل وجهة ولكل مناسبة.",all:"الكل",city:"اقتصادية",comfort:"مريحة",suv:"SUV",luxury:"فاخرة",aboutKicker:"فن التنقل",aboutTitle:"أكثر من سيارة.<br>إنها تجربة.",aboutText:"BOUKILI'S CARS توفر لك تجربة كراء سيارات مصممة حسب احتياجاتك. هدفنا هو تقديم خدمة بسيطة وموثوقة وأنيقة لتنقل بكل راحة في المغرب.",contactUs:"تواصل معنا",f1:"خدمة شخصية",f2:"حجز سهل",f3:"تنقل في المغرب",servicesKicker:"التزامنا",servicesTitle:"تجربة راقية",servicesText:"كل التفاصيل مهمة لجعل رحلتك أكثر راحة.",s1title:"حجز سهل",s1text:"تواصل معنا مباشرة عبر واتساب لتنظيم عملية الكراء.",s2title:"اختيارات متنوعة",s2text:"سيارات اقتصادية وSUV وسيارات فاخرة.",s3title:"التوصيل عند الطلب",s3text:"إمكانية تنظيم توصيل السيارة إلى مدن مختلفة بالمغرب.",ctaKicker:"رحلتك تبدأ هنا",ctaTitle:"واش مستعد للطريق؟",ctaText:"وجهتك القادمة تبدأ مع BOUKILI'S CARS.",ctaButton:"احجز الآن",footerText:"شريكك في التنقل بالمغرب. الراحة والحرية والأناقة في الطريق.",quick:"التصفح",reach:"اتصل بنا",modalTitle:"احجز سيارتك",modalText:"عمر المعلومات وأرسل طلبك عبر واتساب.",send:"أرسل عبر واتساب",day:"اليوم",book:"احجز"},
@@ -299,15 +311,22 @@ en:{home:"Home",fleet:"Our fleet",about:"About",services:"Services",contact:"Con
 let currentLang="fr",currentFilter="all";
 function renderCars(){
  const list=cars.filter(c=>currentFilter==="all"||c.cat===currentFilter);
- document.getElementById("cars").innerHTML=list.map(c=>`
+ const host=document.getElementById("cars");
+ if(!list.length){
+  host.innerHTML='<div class="empty-fleet" style="grid-column:1/-1;text-align:center;padding:45px 20px;border:1px solid #e8e8e8;color:#777"><strong style="display:block;color:#222;margin-bottom:8px">'+(currentLang==="ar"?"لا توجد سيارات منشورة حالياً":"Aucun véhicule disponible pour le moment")+'</strong><span>'+(currentLang==="ar"?"سيتم عرض السيارات هنا مباشرة بعد إضافتها من لوحة الإدارة.":"Les véhicules apparaîtront ici dès leur ajout depuis le tableau de bord.")+'</span></div>';
+  document.getElementById("selectedCar").innerHTML='<option value="">'+(currentLang==="ar"?"لا توجد سيارات":"Aucun véhicule")+'</option>';
+  return;
+ }
+ host.innerHTML=list.map(c=>`
  <article class="car-card">
-  <div class="car-image"><img src="${c.img}" alt="${c.name}" loading="lazy"><span class="car-tag">BOUKILI'S SELECTION</span></div>
-  <div class="car-info"><h3>${c.name}</h3>
-  <div class="car-meta"><span>⚙ ${c.gear}</span><span>⛽ ${c.fuel}</span><span>♙ ${c.seats} places</span></div>
+  <div class="car-image">${c.img?'<img src="'+escapeHtml(c.img)+'" alt="'+escapeHtml(c.name)+'" loading="lazy">':'<div style="height:100%;display:grid;place-items:center;background:#f0f0f0;color:#888;font-size:10px;letter-spacing:2px">PHOTO À AJOUTER</div>'}<span class="car-tag">BOUKILI'S CARS</span></div>
+  <div class="car-info"><h3>${escapeHtml(c.name)}</h3>
+  <div class="car-meta"><span>⚙ ${escapeHtml(c.gear)}</span><span>⛽ ${escapeHtml(c.fuel)}</span><span>♙ ${escapeHtml(c.seats)} places</span>${c.year?'<span>'+c.year+'</span>':''}</div>
   <div class="car-bottom"><div class="price">${c.price} DH <small>/ ${translations[currentLang].day}</small></div>
-  <button class="book-car" onclick="openBooking('${c.name}')">${translations[currentLang].book}</button></div></div>
+  <button class="book-car" onclick="openBooking('${String(c.id)}')">${translations[currentLang].book}</button></div></div>
  </article>`).join("");
 }
+function escapeHtml(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
 function filterCars(cat,btn){
  currentFilter=cat;document.querySelectorAll(".filter").forEach(b=>b.classList.remove("active"));btn.classList.add("active");renderCars();
 }
@@ -318,8 +337,9 @@ function changeLang(lang){
  renderCars();
 }
 function openBooking(car=""){
+ if(!cars.length){alert(currentLang==="ar"?"ما كايناش سيارات منشورة دابا. زيد السيارات من لوحة الإدارة.":"Aucun véhicule publié pour le moment.");return;}
  document.getElementById("bookingModal").classList.add("show");
- document.getElementById("selectedCar").innerHTML=cars.map(c=>`<option ${c.name===car?"selected":""}>${c.name}</option>`).join("");
+ document.getElementById("selectedCar").innerHTML=cars.map(c=>'<option value="'+escapeHtml(c.id)+'" '+(c.id===car?'selected':'')+'>'+escapeHtml(c.name)+'</option>').join("");
  document.getElementById("modalStart").value=document.getElementById("startDate").value;
  document.getElementById("modalEnd").value=document.getElementById("endDate").value;
  document.getElementById("modalCity").value=document.getElementById("city").value;
@@ -328,11 +348,12 @@ function closeBooking(){document.getElementById("bookingModal").classList.remove
 function sendBooking(){
  const name=document.getElementById("customer").value.trim();
  const phone=document.getElementById("phone").value.trim();
- const car=document.getElementById("selectedCar").value;
+ const carId=document.getElementById("selectedCar").value;
+ const car=cars.find(c=>c.id===carId)?.name||"";
  const start=document.getElementById("modalStart").value;
  const end=document.getElementById("modalEnd").value;
  const city=document.getElementById("modalCity").value.trim();
- if(!name||!phone||!start||!end||!city){alert(currentLang==="ar"?"عافاك عمر جميع المعلومات":"Veuillez remplir tous les champs.");return}
+ if(!name||!phone||!start||!end||!city||!car){alert(currentLang==="ar"?"عافاك عمر جميع المعلومات":"Veuillez remplir tous les champs.");return}
  if(end<start){alert("La date de retour doit être après la date de départ.");return}
  const msg=`Bonjour BOUKILI'S CARS,%0AJe souhaite réserver :%0A- Nom : ${encodeURIComponent(name)}%0A- Téléphone : ${encodeURIComponent(phone)}%0A- Véhicule : ${encodeURIComponent(car)}%0A- Départ : ${start}%0A- Retour : ${end}%0A- Ville : ${encodeURIComponent(city)}`;
  window.open("https://wa.me/212663547417?text="+msg,"_blank");
@@ -341,7 +362,10 @@ function searchCars(){
  const cat=document.getElementById("city").value;
  openBooking();document.getElementById("modalCity").value=cat;
 }
-renderCars();
+loadCarsFromDatabase().catch(err=>{
+ console.error(err);
+ document.getElementById("cars").innerHTML='<div style="grid-column:1/-1;text-align:center;padding:35px;color:#777">تعذر تحميل السيارات حالياً. حاول مرة أخرى لاحقاً.</div>';
+});
 </script>
 </body>
 </html>

@@ -12,7 +12,7 @@
       <img class="admin-emblem login-emblem" src="./boukili-emblem.png" alt="BOUKILI’S CARS"><p class="eyebrow">BOUKILI'S CARS</p>
       <h1>Espace administration</h1><p class="muted">Connectez-vous pour gérer votre flotte.</p>
       <label>Email<input id="email" type="email" required autocomplete="username"></label>
-      <label>Mot de passe<input id="password" type="password" required autocomplete="current-password"></label>
+      <label>Code d’accès<input id="password" type="password" required autocomplete="current-password" placeholder="Entrez votre code secret"></label>
       <p id="loginError" class="error"></p><button class="btn dark full">Se connecter</button>
       <small>Accès réservé à l'équipe autorisée</small>
     </form>
@@ -24,7 +24,7 @@
       <button class="nav active" data-tab="vehicles">▣ <span>Flotte automobile</span></button>
       <button class="nav" data-tab="bookings">▦ <span>Réservations</span><i id="newCount"></i></button>
       <button class="nav" data-tab="customers">♙ <span>Clients</span></button>
-      <div class="side-bottom"><div id="userEmail" class="user-email"></div><button id="logout" class="logout">↪ Déconnexion</button></div>
+      <div class="side-bottom"><div id="userEmail" class="user-email"></div><a class="home-link" href="/">⌂ <span>Retour à la page principale</span></a><button id="logout" class="logout">↪ Déconnexion</button></div>
     </aside>
     <main class="main">
       <header class="topbar"><div><span class="eyebrow">BOUKILI'S CARS / ESPACE DE GESTION</span><h2 id="pageTitle">Flotte automobile</h2></div><div class="top-actions"><span class="online">● Système actif</span><button id="refresh" class="btn light">↻ Actualiser</button></div></header>

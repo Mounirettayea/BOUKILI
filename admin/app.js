@@ -3,7 +3,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.57.4';
 const supabase = createClient(
   'https://mbjgirwuqzcjrllnokzj.supabase.co',
   'sb_publishable_gEivTgSBsntxUkkJc3h9AA_-cmDpszh',
-  { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } }
+  { auth: { persistSession: false, autoRefreshToken: true, detectSessionInUrl: false } }
 );
 const $ = (id) => document.getElementById(id);
 const statusNames = {new:'جديد',under_review:'قيد المراجعة',accepted:'مقبول',rejected:'مرفوض',completed:'مكتمل',cancelled:'ملغى'};

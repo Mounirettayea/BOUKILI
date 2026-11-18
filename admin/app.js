@@ -7,6 +7,8 @@ const supabase = createClient(
 const $ = (id) => document.getElementById(id);
 const statusNames = {new:'جديد',under_review:'قيد المراجعة',accepted:'مقبول',rejected:'مرفوض',completed:'مكتمل',cancelled:'ملغى'};
 let session = null, profile = null, vehicles = [], photos = [], bookings = [], customers = [], tab = 'vehicles';
+const PHOTO_BUCKET = 'boukili-car-photos';
+let photoItems = [], mainPhotoKey = null;
 const money = v => new Intl.NumberFormat('fr-MA',{maximumFractionDigits:0}).format(Number(v||0))+' MAD';
 const phoneClean = s => String(s||'').replace(/[^0-9+]/g,'');
 const dateText = s => s ? new Date(s).toLocaleString('fr-MA',{dateStyle:'medium',timeStyle:'short'}) : '—';
@@ -70,15 +72,55 @@ function selectTab(next){
 document.querySelectorAll('.nav').forEach(b=>b.addEventListener('click',()=>selectTab(b.dataset.tab)));
 $('refresh').addEventListener('click',loadAll);
 $('vehicleSearch').addEventListener('input',renderVehicles);$('vehicleFilter').addEventListener('change',renderVehicles);$('customerSearch').addEventListener('input',renderCustomers);
+function clearPhotoPreviews(){
+  photoItems.forEach(p=>{if(p.file && p.previewUrl)URL.revokeObjectURL(p.previewUrl);});
+  photoItems=[];mainPhotoKey=null;
+  if($('photo_files'))$('photo_files').value='';
+  renderPhotoPreviews();
+}
+function renderPhotoPreviews(){
+  const host=$('photoPreviewList');if(!host)return;
+  host.innerHTML=photoItems.map((p,i)=>`<div class="photo-preview">
+    <img src="${esc(p.previewUrl||p.url)}" alt="Photo ${i+1}">
+    <div class="photo-preview-actions">
+      <label><input type="radio" name="mainPhoto" value="${esc(p.key)}" ${mainPhotoKey===p.key?'checked':''}> Principale</label>
+      <button type="button" data-remove-photo="${esc(p.key)}" aria-label="Supprimer la photo">×</button>
+    </div>
+  </div>`).join('');
+}
+$('photo_files').addEventListener('change',e=>{
+  const files=[...e.target.files||[]];
+  for(const file of files){
+    if(!file.type.startsWith('image/')){notice('اختار غير ملفات الصور.');continue;}
+    if(file.size>10*1024*1024){notice('كل صورة خاصها تكون أقل من 10 MB.');continue;}
+    const key='new-'+crypto.randomUUID();
+    photoItems.push({key,file,previewUrl:URL.createObjectURL(file),isNew:true});
+    if(!mainPhotoKey)mainPhotoKey=key;
+  }
+  e.target.value='';renderPhotoPreviews();
+});
+$('photoPreviewList').addEventListener('change',e=>{
+  if(e.target.name==='mainPhoto'){mainPhotoKey=e.target.value;renderPhotoPreviews();}
+});
+$('photoPreviewList').addEventListener('click',e=>{
+  const btn=e.target.closest('[data-remove-photo]');if(!btn)return;
+  const key=btn.dataset.removePhoto, item=photoItems.find(p=>p.key===key);
+  if(item?.file&&item.previewUrl)URL.revokeObjectURL(item.previewUrl);
+  photoItems=photoItems.filter(p=>p.key!==key);
+  if(mainPhotoKey===key)mainPhotoKey=photoItems[0]?.key||null;
+  renderPhotoPreviews();
+});
 function resetVehicleForm(){
-  $('vehicleForm').reset();$('vehicleId').value='';$('seats').value=5;$('doors').value=4;$('is_published').checked=true;$('vehicleDialogTitle').textContent='Ajouter un véhicule';
+  $('vehicleForm').reset();clearPhotoPreviews();$('vehicleId').value='';$('seats').value=5;$('doors').value=4;$('is_published').checked=true;$('vehicleDialogTitle').textContent='Ajouter un véhicule';
 }
 function openVehicle(v){
   resetVehicleForm();
   if(v){$('vehicleDialogTitle').textContent='Modifier le véhicule';$('vehicleId').value=v.id;
     ['brand','model','year','daily_price','fuel','transmission','seats','doors','color','registration_plate','availability_status','description'].forEach(k=>$(k).value=v[k]??'');
     $('is_published').checked=!!v.is_published;
-    $('photo_urls').value=photos.filter(p=>p.vehicle_id===v.id).sort((a,b)=>a.sort_order-b.sort_order).map(p=>p.photo_url).join('\n');
+    photoItems=photos.filter(p=>p.vehicle_id===v.id).sort((a,b)=>a.sort_order-b.sort_order).map(p=>({key:'old-'+p.id,url:p.photo_url,isNew:false,recordId:p.id}));
+    mainPhotoKey=photoItems.find(p=>photos.find(x=>x.id===p.recordId)?.is_main)?.key||photoItems[0]?.key||null;
+    renderPhotoPreviews();
   }
   $('vehicleDialog').showModal();
 }
@@ -91,15 +133,39 @@ $('vehicleGrid').addEventListener('click',async e=>{
 });
 $('vehicleForm').addEventListener('submit',async e=>{
   e.preventDefault();
-  const id=$('vehicleId').value;
-  const data={brand:$('brand').value.trim(),model:$('model').value.trim(),year:$('year').value?Number($('year').value):null,daily_price:Number($('daily_price').value),fuel:$('fuel').value,transmission:$('transmission').value,seats:Number($('seats').value||5),doors:Number($('doors').value||4),color:$('color').value,registration_plate:$('registration_plate').value,availability_status:$('availability_status').value,is_published:$('is_published').checked,description:$('description').value,updated_at:new Date().toISOString()};
-  let result=id?await supabase.from('boukili_vehicles').update(data).eq('id',id).select().single():await supabase.from('boukili_vehicles').insert(data).select().single();
-  if(result.error){notice(result.error.message);return;}
-  const vehicleId=result.data.id,urls=[...new Set($('photo_urls').value.split('\n').map(s=>s.trim()).filter(Boolean))];
-  const del=await supabase.from('boukili_vehicle_photos').delete().eq('vehicle_id',vehicleId);
-  if(del.error){notice('حفظنا السيارة ولكن تعذر تحديث الصور: '+del.error.message);return;}
-  if(urls.length){const ins=await supabase.from('boukili_vehicle_photos').insert(urls.map((photo_url,i)=>({vehicle_id:vehicleId,photo_url,is_main:i===0,sort_order:i})));if(ins.error){notice('حفظنا السيارة ولكن تعذر حفظ الصور: '+ins.error.message);return;}}
-  $('vehicleDialog').close();notice('تم حفظ السيارة بنجاح.');await loadAll();
+  const saveBtn=$('vehicleForm').querySelector('button[type="submit"],.dialog-actions .btn.dark');
+  saveBtn.disabled=true;saveBtn.textContent='Enregistrement…';
+  try{
+    const id=$('vehicleId').value;
+    const data={brand:$('brand').value.trim(),model:$('model').value.trim(),year:$('year').value?Number($('year').value):null,daily_price:Number($('daily_price').value),fuel:$('fuel').value,transmission:$('transmission').value,seats:Number($('seats').value||5),doors:Number($('doors').value||4),color:$('color').value,registration_plate:$('registration_plate').value,availability_status:$('availability_status').value,is_published:$('is_published').checked,description:$('description').value,updated_at:new Date().toISOString()};
+    const result=id?await supabase.from('boukili_vehicles').update(data).eq('id',id).select().single():await supabase.from('boukili_vehicles').insert(data).select().single();
+    if(result.error)throw result.error;
+    const vehicleId=result.data.id, previous=photos.filter(p=>p.vehicle_id===vehicleId);
+    const finalItems=[];
+    for(const item of photoItems){
+      if(item.isNew){
+        const ext=(item.file.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'')||'jpg';
+        const path=vehicleId+'/'+crypto.randomUUID()+'.'+ext;
+        const {error:uploadError}=await supabase.storage.from(PHOTO_BUCKET).upload(path,item.file,{cacheControl:'31536000',contentType:item.file.type,upsert:false});
+        if(uploadError)throw uploadError;
+        const {data:publicData}=supabase.storage.from(PHOTO_BUCKET).getPublicUrl(path);
+        finalItems.push({key:item.key,url:publicData.publicUrl});
+      }else finalItems.push({key:item.key,url:item.url});
+    }
+    const del=await supabase.from('boukili_vehicle_photos').delete().eq('vehicle_id',vehicleId);
+    if(del.error)throw del.error;
+    if(finalItems.length){
+      const rows=finalItems.map((p,i)=>({vehicle_id:vehicleId,photo_url:p.url,is_main:p.key===mainPhotoKey,sort_order:i}));
+      const ins=await supabase.from('boukili_vehicle_photos').insert(rows);
+      if(ins.error)throw ins.error;
+    }
+    const keptUrls=new Set(finalItems.map(p=>p.url));
+    const storagePrefix='https://mbjgirwuqzcjrllnokzj.supabase.co/storage/v1/object/public/'+PHOTO_BUCKET+'/';
+    const obsolete=previous.map(p=>p.photo_url).filter(url=>url.startsWith(storagePrefix)&&!keptUrls.has(url)).map(url=>decodeURIComponent(url.slice(storagePrefix.length)));
+    if(obsolete.length)await supabase.storage.from(PHOTO_BUCKET).remove(obsolete);
+    $('vehicleDialog').close();notice('تم حفظ السيارة والصور بنجاح.');await loadAll();
+  }catch(err){notice('تعذر الحفظ: '+(err.message||'خطأ غير معروف'));}
+  finally{saveBtn.disabled=false;saveBtn.textContent='Enregistrer';}
 });
 $('addBooking').addEventListener('click',()=>{
   $('bookingForm').reset();

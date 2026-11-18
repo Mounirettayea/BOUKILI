@@ -95,6 +95,14 @@ nav a:hover{color:#999}
 .car-card:hover{transform:translateY(-7px);box-shadow:0 20px 45px #00000012}
 .car-image{height:225px;background:#eee;position:relative;overflow:hidden}
 .car-image img{width:100%;height:100%;object-fit:cover;transition:.6s;display:block}
+.car-image .car-gallery-img{width:100%;height:100%;object-fit:cover;transition:transform .35s;display:block}
+.car-card:hover .car-image .car-gallery-img{transform:scale(1.035)}
+.gallery-arrow{position:absolute;top:50%;transform:translateY(-50%);z-index:2;width:34px;height:34px;border:1px solid #ffffffa8;border-radius:50%;background:#1119;color:#fff;font-size:25px;line-height:1;display:grid;place-items:center;cursor:pointer;transition:.2s}
+.gallery-arrow:hover{background:#111}
+.gallery-prev{left:12px}.gallery-next{right:12px}
+.gallery-count{position:absolute;right:13px;bottom:12px;z-index:2;background:#111b;color:#fff;padding:5px 9px;border-radius:20px;font-size:10px;letter-spacing:1px}
+.car-image[data-gallery-id]{touch-action:pan-y}
+
 .car-card:hover img{transform:scale(1.06)}
 .car-tag{position:absolute;top:15px;left:15px;background:#fff;padding:7px 11px;font-size:8px;font-weight:800;letter-spacing:1.5px}
 .car-info{padding:23px}
@@ -278,6 +286,7 @@ footer h4{font-size:10px;letter-spacing:2px;margin-bottom:18px}
 
 <script>
 let cars=[];
+const carPhotoIndexes={};
 const SUPABASE_URL='https://mbjgirwuqzcjrllnokzj.supabase.co';
 const SUPABASE_KEY='sb_publishable_gEivTgSBsntxUkkJc3h9AA_-cmDpszh';
 const apiHeaders={apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY};
@@ -298,8 +307,9 @@ async function loadCarsFromDatabase(){
  if(!pr.ok)throw new Error('تعذر تحميل صور السيارات ('+pr.status+').');
  const vehicles=await vr.json(),photos=await pr.json();
  cars=vehicles.map(v=>{
-  const p=photos.filter(x=>x.vehicle_id===v.id).sort((a,b)=>(Number(b.is_main)-Number(a.is_main))||a.sort_order-b.sort_order)[0];
-  return {id:v.id,name:[v.brand,v.model].filter(Boolean).join(' '),cat:carCategory(v),price:Number(v.daily_price||0),gear:v.transmission||'—',fuel:v.fuel||'—',seats:v.seats||'—',year:v.year,img:p?.photo_url||'',color:v.color||''};
+  const vehiclePhotos=photos.filter(x=>x.vehicle_id===v.id).sort((a,b)=>(Number(b.is_main)-Number(a.is_main))||a.sort_order-b.sort_order);
+  carPhotoIndexes[v.id]=0;
+  return {id:v.id,name:[v.brand,v.model].filter(Boolean).join(' '),cat:carCategory(v),price:Number(v.daily_price||0),gear:v.transmission||'—',fuel:v.fuel||'—',seats:v.seats||'—',year:v.year,photos:vehiclePhotos.map(p=>p.photo_url),img:vehiclePhotos[0]?.photo_url||'',color:v.color||''};
  });
  renderCars();
 }
@@ -319,7 +329,9 @@ function renderCars(){
  }
  host.innerHTML=list.map(c=>`
  <article class="car-card">
-  <div class="car-image">${c.img?'<img src="'+escapeHtml(c.img)+'" alt="'+escapeHtml(c.name)+'" loading="lazy">':'<div style="height:100%;display:grid;place-items:center;background:#f0f0f0;color:#888;font-size:10px;letter-spacing:2px">PHOTO À AJOUTER</div>'}<span class="car-tag">BOUKILI'S CARS</span></div>
+  <div class="car-image" data-gallery-id="${escapeHtml(c.id)}">${c.photos.length?'<img class="car-gallery-img" src="'+escapeHtml(c.photos[0])+'" alt="'+escapeHtml(c.name)+'" loading="lazy">':'<div style="height:100%;display:grid;place-items:center;background:#f0f0f0;color:#888;font-size:10px;letter-spacing:2px">PHOTO À AJOUTER</div>'}
+  ${c.photos.length>1?'<button class="gallery-arrow gallery-prev" type="button" aria-label="Photo précédente" onclick="changeCarPhoto(\''+String(c.id)+'\',-1,event)">‹</button><button class="gallery-arrow gallery-next" type="button" aria-label="Photo suivante" onclick="changeCarPhoto(\''+String(c.id)+'\',1,event)">›</button><span class="gallery-count">1 / '+c.photos.length+'</span>':''}
+  <span class="car-tag">BOUKILI'S CARS</span></div>
   <div class="car-info"><h3>${escapeHtml(c.name)}</h3>
   <div class="car-meta"><span>⚙ ${escapeHtml(c.gear)}</span><span>⛽ ${escapeHtml(c.fuel)}</span><span>♙ ${escapeHtml(c.seats)} places</span>${c.year?'<span>'+c.year+'</span>':''}</div>
   <div class="car-bottom"><div class="price">${c.price} DH <small>/ ${translations[currentLang].day}</small></div>
@@ -327,6 +339,31 @@ function renderCars(){
  </article>`).join("");
 }
 function escapeHtml(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function changeCarPhoto(id,step,event){
+ if(event){event.preventDefault();event.stopPropagation();}
+ const car=cars.find(x=>String(x.id)===String(id));
+ if(!car||!car.photos||car.photos.length<2)return;
+ const index=((carPhotoIndexes[id]||0)+step+car.photos.length)%car.photos.length;
+ carPhotoIndexes[id]=index;
+ const gallery=document.querySelector('[data-gallery-id="'+CSS.escape(String(id))+'"]');
+ if(!gallery)return;
+ const img=gallery.querySelector('.car-gallery-img');
+ const count=gallery.querySelector('.gallery-count');
+ if(img){img.src=car.photos[index];img.alt=car.name+' - '+(index+1);}
+ if(count)count.textContent=(index+1)+' / '+car.photos.length;
+}
+document.getElementById('cars').addEventListener('touchstart',e=>{
+ const gallery=e.target.closest('[data-gallery-id]');
+ if(gallery)gallery.dataset.touchStartX=e.changedTouches[0].clientX;
+},{passive:true});
+document.getElementById('cars').addEventListener('touchend',e=>{
+ const gallery=e.target.closest('[data-gallery-id]');
+ if(!gallery||!gallery.dataset.touchStartX)return;
+ const dx=e.changedTouches[0].clientX-Number(gallery.dataset.touchStartX);
+ delete gallery.dataset.touchStartX;
+ if(Math.abs(dx)>45)changeCarPhoto(gallery.dataset.galleryId,dx<0?1:-1);
+},{passive:true});
+
 function filterCars(cat,btn){
  currentFilter=cat;document.querySelectorAll(".filter").forEach(b=>b.classList.remove("active"));btn.classList.add("active");renderCars();
 }

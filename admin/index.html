@@ -59,7 +59,14 @@
       <label>État<select id="availability_status"><option value="available">Disponible</option><option value="out_of_service">Hors service</option></select></label>
       <label class="check"><input id="is_published" type="checkbox" checked> Afficher sur le site</label>
       <label class="wide">Description<textarea id="description" rows="3"></textarea></label>
-      <label class="wide">Liens des photos (un lien par ligne)<textarea id="photo_urls" rows="4" placeholder="https://…"></textarea><small>أول صورة هي الصورة الرئيسية. استعمل رابط مباشر للصورة.</small></label>
+      <div class="wide photo-upload-area">
+        <label>صور السيارة من الهاتف أو الحاسوب
+          <input id="photo_files" type="file" accept="image/*" multiple>
+          <small>اختار الصور من Galerie أو التقط صوراً بالكاميرا. الحد الأقصى 10 MB للصورة.</small>
+        </label>
+        <div id="photoPreviewList" class="photo-preview-list"></div>
+        <small>حدد "Principale" على الصورة التي تريد عرضها أولاً في الموقع.</small>
+      </div>
     </div><div class="dialog-actions"><button type="button" class="btn light" data-close>Annuler</button><button class="btn dark">Enregistrer</button></div>
   </form></dialog>
   <dialog id="bookingDialog"><form id="bookingForm" method="dialog"><div class="dialog-head"><div><p class="eyebrow">AJOUT MANUEL</p><h2>Demande WhatsApp</h2></div><button type="button" class="close" data-close>×</button></div>

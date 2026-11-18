@@ -18,7 +18,8 @@
     </form>
   </div>
   <div id="appView" class="app hidden">
-    <aside class="sidebar">
+    <div id="sidebarOverlay" class="sidebar-overlay"></div>
+    <aside class="sidebar" id="adminSidebar">
       <div class="brand"><img class="admin-emblem small" src="./boukili-emblem.png" alt="BOUKILI’S CARS"><div><b>BOUKILI'S CARS</b><small>ADMINISTRATION</small></div></div>
       <p class="nav-caption">GESTION</p>
       <button class="nav active" data-tab="vehicles">▣ <span>Flotte automobile</span></button>
@@ -27,7 +28,7 @@
       <div class="side-bottom"><div id="userEmail" class="user-email"></div><a class="home-link" href="/">⌂ <span>Retour à la page principale</span></a><button id="logout" class="logout">↪ Déconnexion</button></div>
     </aside>
     <main class="main">
-      <header class="topbar"><a class="top-home" href="/" aria-label="Retour au site principal">⌂ <span>Accueil</span></a><div><span class="eyebrow">BOUKILI'S CARS / ESPACE DE GESTION</span><h2 id="pageTitle">Flotte automobile</h2></div><div class="top-actions"><span class="online">● Système actif</span><button id="refresh" class="btn light">↻ Actualiser</button></div></header>
+      <header class="topbar"><button id="menuToggle" class="menu-toggle" type="button" aria-label="Ouvrir le menu" aria-expanded="false">☰ <span>Menu</span></button><div><span class="eyebrow">BOUKILI'S CARS / ESPACE DE GESTION</span><h2 id="pageTitle">Flotte automobile</h2></div><div class="top-actions"><span class="online">● Système actif</span><button id="refresh" class="btn light">↻ Actualiser</button></div></header>
       <div id="notice" class="notice hidden"></div>
       <section id="vehiclesTab" class="tab-content">
         <div class="heading"><div><p class="eyebrow">VOTRE PARC AUTOMOBILE</p><h1>Gestion des véhicules</h1><p class="muted">Ajoutez vos voitures, gérez les tarifs et leur visibilité sur le site.</p></div><button id="addVehicle" class="btn dark">＋ Ajouter une voiture</button></div>
@@ -78,5 +79,23 @@
       <label class="wide">Note<textarea id="customer_message" rows="2"></textarea></label>
     </div><div class="dialog-actions"><button type="button" class="btn light" data-close>Annuler</button><button class="btn dark">Créer la demande</button></div>
   </form></dialog>
+  <script>
+    (() => {
+      const sidebar = document.getElementById("adminSidebar");
+      const toggle = document.getElementById("menuToggle");
+      const overlay = document.getElementById("sidebarOverlay");
+      if (!sidebar || !toggle || !overlay) return;
+      const closeMenu = () => { sidebar.classList.remove("open"); overlay.classList.remove("visible"); toggle.setAttribute("aria-expanded", "false"); };
+      toggle.addEventListener("click", () => {
+        const opening = !sidebar.classList.contains("open");
+        sidebar.classList.toggle("open", opening);
+        overlay.classList.toggle("visible", opening);
+        toggle.setAttribute("aria-expanded", String(opening));
+      });
+      overlay.addEventListener("click", closeMenu);
+      sidebar.querySelectorAll(".nav, .home-link, .logout").forEach(el => el.addEventListener("click", closeMenu));
+      document.addEventListener("keydown", e => { if (e.key === "Escape") closeMenu(); });
+    })();
+  </script>
   <script type="module" src="./app.js"></script>
 </body></html>
